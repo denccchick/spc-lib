@@ -1,6 +1,6 @@
 import numpy as np
 import warnings
-from spc_lib.core.base_chart import BaseControlChart
+from src.spc_lib.core.base_chart import BaseControlChart
 
 
 class CUSUMChart(BaseControlChart):
