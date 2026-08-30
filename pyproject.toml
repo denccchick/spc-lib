@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "spc-lib"
+version = "1.0.0"
+description = "Statistical Process Control (SPC) library for quality monitoring"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Denis Leonov", email = "d3nleonoff@yandex.ru"}
+]
+keywords = ["spc", "quality", "control-charts", "statistics", "six-sigma"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Manufacturing",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.20.0",
+    "pandas>=1.3.0",
+    "plotly>=5.0.0",
+    "scipy>=1.7.0",
+    "statsmodels>=0.13.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipykernel>=6.0.0",
+    "jupyter>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/denccchick/spc-lib"
+Bug_Reports = "https://github.com/denccchick/spc-lib/issues"
+Source = "https://github.com/denccchick/spc-lib"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/spc_lib"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/examples",
+    "README.md",
+    "LICENSE",
+]
