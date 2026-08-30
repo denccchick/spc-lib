@@ -2,7 +2,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from typing import Optional, List
-from spc_lib.rules import detect_violations
+from src.spc_lib.rules import detect_violations
 
 COLOR_MAIN = "#21a358"
 COLOR_RED = "#dc3545"

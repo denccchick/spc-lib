@@ -1,5 +1,5 @@
 import numpy as np
-from spc_lib.core.base_chart import BaseControlChart
+from src.spc_lib.core.base_chart import BaseControlChart
 
 # Константы Монтгомери (n: A2, A3, D3, D4, B3, B4)
 SPC_CONSTANTS = {
