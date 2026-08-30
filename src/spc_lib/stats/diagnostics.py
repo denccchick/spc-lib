@@ -2,67 +2,67 @@ import numpy as np
 from scipy import stats
 from statsmodels.stats.stattools import durbin_watson
 
+
 def diagnose(data, alpha=0.05, iqr_multiplier=1.5, min_samples=15):
     """
-    Диагностика распределения данных перед построением контрольных карт.
+    Diagnostic analysis of data distribution before building control charts.
 
     Parameters
     ----------
     data : array-like
-        Вектор (1D) или матрица (2D). Если матрица — усредняется по строкам.
+        Vector (1D) or matrix (2D). If matrix — averaged by rows.
     alpha : float, default=0.05
-        Уровень значимости для статистических тестов.
+        Significance level for statistical tests.
     iqr_multiplier : float, default=1.5
-        Множитель для IQR (1.5 - классический предел для выбросов).
+        Multiplier for IQR (1.5 - classic outlier threshold).
     min_samples : int, default=15
-        Минимальное количество наблюдений для проведения тестов.
+        Minimum number of observations for performing tests.
 
     Returns
     -------
     dict
-        Результаты проверок: нормальность, автокорреляция, выбросы.
+        Diagnostic results: normality, autocorrelation, outliers.
     """
-    # 1. Валидация
+    # 1. Validation
     if not hasattr(data, '__len__') and not isinstance(data, (list, tuple, np.ndarray)):
-        raise TypeError(f"Данные должны быть массивом, получен {type(data).__name__}")
+        raise TypeError(f"Data must be an array, got {type(data).__name__}")
 
     data = np.asarray(data, dtype=float)
 
     if len(data) == 0:
-        raise ValueError("Нет данных для анализа (пустой массив)")
+        raise ValueError("No data for analysis (empty array)")
 
-    # Если 2D — усредняем по строкам (axis=1), так как контрольная карта средних работает с X-bar
+    # If 2D — average by rows (axis=1), since X-bar charts work with means
     if data.ndim == 2:
         data = np.mean(data, axis=1)
 
-    # Очистка от бесконечностей
+    # Clean infinities
     if np.any(np.isinf(data)):
         n_inf = np.isinf(data).sum()
-        raise ValueError(f"Обнаружены бесконечные значения (inf): {n_inf} шт.")
+        raise ValueError(f"Infinite values (inf) detected: {n_inf}")
 
-    # Очистка от NaN
+    # Clean NaNs
     n_nan = np.isnan(data).sum()
     if n_nan > 0:
-        print(f"Предупреждение: удалено {n_nan} пропущенных значений (NaN)")
+        print(f"Warning: removed {n_nan} missing values (NaN)")
         data = data[~np.isnan(data)]
 
     n = len(data)
 
     if n == 0:
-        raise ValueError("После удаления пропусков (NaN) данных не осталось")
+        raise ValueError("No data left after removing missing values (NaN)")
 
-    # Проверка на минимальный размер выборки
+    # Check minimum sample size
     if n < min_samples:
-        msg = f'Недостаточно данных (n={n} < {min_samples})'
+        msg = f'Insufficient data (n={n} < {min_samples})'
         return {'normality': msg, 'autocorrelation': msg, 'outliers': msg}
 
-    # Проверка на нулевую дисперсию
+    # Check for zero variance
     if np.all(data == data[0]):
-        msg = 'Нет вариативности (все значения одинаковы)'
+        msg = 'No variability (all values are identical)'
         return {'normality': msg, 'autocorrelation': msg, 'outliers': msg}
 
-
-    # 2. Тесты
+    # 2. Tests
     normality = _check_normality(data, alpha)
     autocorr = _check_autocorrelation(data)
     outliers = _check_outliers(data, iqr_multiplier)
@@ -75,35 +75,35 @@ def diagnose(data, alpha=0.05, iqr_multiplier=1.5, min_samples=15):
 
 
 def _check_normality(data, alpha):
-    """Проверка нормальности (Шапиро-Уилк или Колмогоров-Смирнов для больших данных)"""
+    """Check normality (Shapiro-Wilk or Kolmogorov-Smirnov for large data)"""
     n = len(data)
 
     if n > 5000:
-        # Для больших выборок Шапиро-Уилк может быть неточным, используем K-S тест
+        # For large samples, Shapiro-Wilk may be inaccurate, use K-S test
         data_std = (data - np.mean(data)) / np.std(data, ddof=1)
         _, p_value = stats.kstest(data_std, 'norm')
     else:
         _, p_value = stats.shapiro(data)
 
-    return 'Нормальное' if p_value >= alpha else 'Не нормальное'
+    return 'Normal' if p_value >= alpha else 'Non-normal'
 
 
 def _check_autocorrelation(data):
-    """Проверка автокорреляции (Критерий Дарбина-Уотсона из statsmodels)"""
-    # Дарбин-Уотсон тестирует остатки. Для простого ряда остатки = данные минус среднее.
+    """Check autocorrelation (Durbin-Watson test from statsmodels)"""
+    # Durbin-Watson tests residuals. For simple series, residuals = data - mean.
     residuals = data - np.mean(data)
     dw_stat = durbin_watson(residuals)
 
     if 1.5 <= dw_stat <= 2.5:
-        return 'Нет автокорреляции'
+        return 'No autocorrelation'
     elif dw_stat < 1.5:
-        return 'Положительная автокорреляция'
+        return 'Positive autocorrelation'
     else:
-        return 'Отрицательная автокорреляция'
+        return 'Negative autocorrelation'
 
 
 def _check_outliers(data, multiplier):
-    """Поиск выбросов методом межквартильного размаха (IQR)"""
+    """Detect outliers using the interquartile range (IQR) method"""
     n = len(data)
 
     q1 = np.percentile(data, 25)
@@ -111,20 +111,20 @@ def _check_outliers(data, multiplier):
     iqr = q3 - q1
 
     if iqr == 0:
-        return 'IQR = 0 (невозможно определить выбросы классическим методом)'
+        return 'IQR = 0 (cannot detect outliers with classic method)'
 
     lower = q1 - multiplier * iqr
     upper = q3 + multiplier * iqr
 
-    # Считаем количество точек за пределами усов
+    # Count points beyond the whiskers
     outliers_count = np.sum((data < lower) | (data > upper))
     percentage = (outliers_count / n) * 100
 
     if percentage < 1.0:
-        return 'Выбросов почти нет (<1%)'
+        return 'Almost no outliers (<1%)'
     elif percentage < 5.0:
-        return 'Выбросов нормальное количество (1-5%)'
+        return 'Normal number of outliers (1-5%)'
     elif percentage < 10.0:
-        return 'Много выбросов (5-10%)'
+        return 'Many outliers (5-10%)'
     else:
-        return 'Очень много выбросов (>10%, тяжелые хвосты)'
+        return 'Very many outliers (>10%, heavy tails)'

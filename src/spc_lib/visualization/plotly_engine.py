@@ -16,14 +16,14 @@ RULE_COLORS = {
 }
 
 RULE_NAMES = {
-    1: 'Rule 1: Точка за 3s',
-    2: 'Rule 2: 9 точек на одной стороне',
-    3: 'Rule 3: 6 точек с трендом',
-    4: 'Rule 4: 14 точек с чередованием',
-    5: 'Rule 5: 2 из 3 в зоне A',
-    6: 'Rule 6: 4 из 5 в зоне B',
-    7: 'Rule 7: 15 точек в зоне C',
-    8: 'Rule 8: 8 точек вне зоны C'
+    1: 'Rule 1: Point beyond 3σ',
+    2: 'Rule 2: 9 points on one side',
+    3: 'Rule 3: 6 points with trend',
+    4: 'Rule 4: 14 points alternating',
+    5: 'Rule 5: 2 of 3 in zone A',
+    6: 'Rule 6: 4 of 5 in zone B',
+    7: 'Rule 7: 15 points in zone C',
+    8: 'Rule 8: 8 points outside zone C'
 }
 
 
@@ -33,14 +33,14 @@ def _plot_single_chart(dates, stats, ucl, cl, lcl, title, target=None, usl=None,
     stats = stats[valid]
     dates = dates[valid]
 
-    # Обработка динамических пределов (например, для p-карты с переменным n)
+    # Handle dynamic limits (e.g., p-chart with variable n)
     is_ucl_array = isinstance(ucl, np.ndarray) or isinstance(ucl, list)
     is_lcl_array = isinstance(lcl, np.ndarray) or isinstance(lcl, list)
 
     ucl_plot = ucl[valid] if is_ucl_array else [ucl] * len(dates)
     lcl_plot = lcl[valid] if is_lcl_array else [lcl] * len(dates)
 
-    # Поиск нарушений
+    # Find violations
     violations = np.zeros(len(stats), dtype=bool)
     if is_ucl_array:
         violations = (stats > ucl_plot) | (stats < lcl_plot)
@@ -52,14 +52,14 @@ def _plot_single_chart(dates, stats, ucl, cl, lcl, title, target=None, usl=None,
 
     fig = go.Figure()
 
-    # UCL (может быть ступенчатой линией)
+    # UCL (may be stepwise)
     fig.add_trace(go.Scatter(
         x=dates, y=ucl_plot, mode="lines",
         line=dict(color=COLOR_RED, width=2.5, shape='hv' if is_ucl_array else 'linear'),
         showlegend=False, hoverinfo='skip'
     ))
 
-    # LCL (может быть ступенчатой линией)
+    # LCL (may be stepwise)
     fig.add_trace(go.Scatter(
         x=dates, y=lcl_plot, mode="lines",
         line=dict(color=COLOR_RED, width=2.5, shape='hv' if is_lcl_array else 'linear'),
@@ -72,7 +72,7 @@ def _plot_single_chart(dates, stats, ucl, cl, lcl, title, target=None, usl=None,
         line=dict(color=COLOR_CL, width=2, dash='dash'), showlegend=False, hoverinfo='skip'
     ))
 
-    # TARGET (если задан)
+    # TARGET (if provided)
     if target is not None:
         fig.add_trace(go.Scatter(
             x=dates, y=[target] * len(dates), mode="lines",
@@ -80,7 +80,7 @@ def _plot_single_chart(dates, stats, ucl, cl, lcl, title, target=None, usl=None,
             name='Target'
         ))
 
-    # USL/LSL (если заданы и show_spec=True)
+    # USL/LSL (if provided and show_spec=True)
     if show_spec:
         if usl is not None:
             fig.add_trace(go.Scatter(
@@ -95,12 +95,12 @@ def _plot_single_chart(dates, stats, ucl, cl, lcl, title, target=None, usl=None,
                 name='LSL'
             ))
 
-    # Основная статистика
+    # Main statistic
     fig.add_trace(go.Scatter(
         x=dates, y=stats, mode='lines+markers',
         line=dict(color=COLOR_MAIN, width=3.5),
         marker=dict(color=marker_colors, size=marker_sizes, line=dict(color='white', width=2)),
-        hovertemplate="Дата: %{x}<br>Значение: <b>%{y:.4f}</b><extra></extra>",
+        hovertemplate="Date: %{x}<br>Value: <b>%{y:.4f}</b><extra></extra>",
         showlegend=False
     ))
 
@@ -127,7 +127,7 @@ def plot_control_chart(chart, start=None, end=None, last_n=30, show_spec=False):
     else:
         mask = np.arange(len(dates)) >= (len(dates) - last_n)
 
-    # 1. Строим главный график
+    # 1. Build main chart
     fig_main = _plot_single_chart(
         dates[mask],
         np.asarray(chart.stat_main)[mask],
@@ -139,11 +139,11 @@ def plot_control_chart(chart, start=None, end=None, last_n=30, show_spec=False):
         show_spec=show_spec
     )
 
-    # 2. Если нет статистики разброса (как в p-chart или c-chart), возвращаем только 1 график
+    # 2. If no dispersion statistic (like p-chart or c-chart), return only 1 chart
     if chart.stat_disp is None:
         return fig_main
 
-    # 3. Строим график дисперсии (если он есть, например Xbar-R)
+    # 3. Build dispersion chart (if it exists, e.g., Xbar-R)
     fig_disp = _plot_single_chart(
         dates[mask],
         np.asarray(chart.stat_disp)[mask],
@@ -186,7 +186,7 @@ def plot_rules_violations(chart, start=None, end=None, last_n=30, rules=None, n_
         fig = go.Figure()
         fig.add_annotation(
             x=0.5, y=0.5, xref="paper", yref="paper",
-            text="<b>Нарушений правил Western Electric не обнаружено</b>",
+            text="<b>No Western Electric rule violations detected</b>",
             showarrow=False, font=dict(size=16, color="#666666")
         )
         fig.update_layout(height=400, plot_bgcolor='white', paper_bgcolor='white')
@@ -251,7 +251,7 @@ def plot_rules_violations(chart, start=None, end=None, last_n=30, rules=None, n_
             line=dict(color=COLOR_CL, width=2, dash='dash'), showlegend=False, hoverinfo='skip'
         ), row=row, col=col)
 
-        # Target (если задан)
+        # Target (if provided)
         if chart.target is not None:
             fig.add_trace(go.Scatter(
                 x=dates_plot, y=[chart.target] * n_points, mode="lines",
@@ -259,7 +259,7 @@ def plot_rules_violations(chart, start=None, end=None, last_n=30, rules=None, n_
                 showlegend=False, hoverinfo='skip'
             ), row=row, col=col)
 
-        # USL/LSL (если заданы и show_spec=True)
+        # USL/LSL (if provided and show_spec=True)
         if show_spec:
             if chart.usl is not None:
                 fig.add_trace(go.Scatter(
@@ -282,7 +282,7 @@ def plot_rules_violations(chart, start=None, end=None, last_n=30, rules=None, n_
                 size=marker_sizes_rule,
                 line=dict(color='white', width=2)
             ),
-            hovertemplate="Дата: %{x}<br>Значение: <b>%{y:.4f}</b><extra></extra>",
+            hovertemplate="Date: %{x}<br>Value: <b>%{y:.4f}</b><extra></extra>",
             showlegend=False
         ), row=row, col=col)
 
@@ -308,9 +308,9 @@ def plot_rules_violations(chart, start=None, end=None, last_n=30, rules=None, n_
         plot_bgcolor='white', paper_bgcolor='white',
         hovermode='x unified',
         title=dict(
-            text=f"<b>Нарушения правил Western Electric</b><br>"
+            text=f"<b>Western Electric Rule Violations</b><br>"
                  f"<span style='font-size:14px;color:#666;'>"
-                 f"Всего нарушений: {sum(len(v) for v in active_rules.values())} в правилах {', '.join(map(str, active_rules.keys()))}"
+                 f"Total violations: {sum(len(v) for v in active_rules.values())} in rules {', '.join(map(str, active_rules.keys()))}"
                  f"</span>",
             x=0.5
         ),
@@ -319,10 +319,11 @@ def plot_rules_violations(chart, start=None, end=None, last_n=30, rules=None, n_
 
     return fig
 
+
 def plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
     """
-    Специализированная визуализация для CUSUM карты.
-    Отображает верхнюю и нижнюю кумулятивные суммы.
+    Specialized visualization for CUSUM chart.
+    Displays upper and lower cumulative sums.
     """
     dates = np.asarray(chart.datetimes)
 
@@ -338,10 +339,10 @@ def plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
     dates_plot = dates[mask]
 
     fig = make_subplots(rows=2, cols=1,
-                        subplot_titles=("Верхняя CUSUM (C+)", "Нижняя CUSUM (C-)"),
+                        subplot_titles=("Upper CUSUM (C+)", "Lower CUSUM (C-)"),
                         vertical_spacing=0.15)
 
-    # Верхняя CUSUM
+    # Upper CUSUM
     fig.add_trace(go.Scatter(
         x=dates_plot, y=cusum_upper, mode='lines+markers',
         line=dict(color=COLOR_MAIN, width=2.5),
@@ -349,7 +350,7 @@ def plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
         name="C+"
     ), row=1, col=1)
 
-    # Граница для верхней
+    # Upper boundary
     fig.add_trace(go.Scatter(
         x=dates_plot, y=[chart.ucl_main] * len(dates_plot),
         mode="lines",
@@ -357,7 +358,7 @@ def plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
         name=f"UCL = {chart.ucl_main:.3f}"
     ), row=1, col=1)
 
-    # Нижняя CUSUM
+    # Lower CUSUM
     fig.add_trace(go.Scatter(
         x=dates_plot, y=cusum_lower, mode='lines+markers',
         line=dict(color="#FF6B00", width=2.5),
@@ -365,7 +366,7 @@ def plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
         name="C-"
     ), row=2, col=1)
 
-    # Граница для нижней
+    # Lower boundary
     fig.add_trace(go.Scatter(
         x=dates_plot, y=[chart.lcl_main] * len(dates_plot),
         mode="lines",
@@ -376,7 +377,7 @@ def plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
     fig.update_layout(
         height=700,
         title=dict(
-            text=f"<b>CUSUM контрольная карта</b><br>"
+            text=f"<b>CUSUM Control Chart</b><br>"
                  f"<span style='font-size:14px;color:#666;'>"
                  f"λ={chart.k}, h={chart.h}, σ={chart.sigma_est:.4f}"
                  f"</span>",
@@ -395,7 +396,7 @@ def plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
 
 def plot_ewma_chart(chart, start=None, end=None, last_n=30, show_spec=False):
     """
-    Специализированная визуализация для EWMA карты.
+    Specialized visualization for EWMA chart.
     """
     dates = np.asarray(chart.datetimes)
 
@@ -412,7 +413,7 @@ def plot_ewma_chart(chart, start=None, end=None, last_n=30, show_spec=False):
 
     fig = go.Figure()
 
-    # UCL и LCL
+    # UCL and LCL
     ucl_values = chart.ucl_main if isinstance(chart.ucl_main, (int, float)) else chart.ucl_main[mask]
     lcl_values = chart.lcl_main if isinstance(chart.lcl_main, (int, float)) else chart.lcl_main[mask]
 
@@ -447,7 +448,7 @@ def plot_ewma_chart(chart, start=None, end=None, last_n=30, show_spec=False):
         name="CL"
     ))
 
-    # Target (если задан)
+    # Target (if provided)
     if chart.target is not None and chart.target != cl_value:
         fig.add_trace(go.Scatter(
             x=dates_plot, y=[chart.target] * len(dates_plot), mode="lines",
@@ -455,8 +456,8 @@ def plot_ewma_chart(chart, start=None, end=None, last_n=30, show_spec=False):
             name="Target"
         ))
 
-    # EWMA значения
-    # Отмечаем точки за пределами границ
+    # EWMA values
+    # Mark points beyond limits
     violations = np.zeros(len(ewma_values), dtype=bool)
     if isinstance(ucl_values, np.ndarray):
         violations = (ewma_values > ucl_values) | (ewma_values < lcl_values)
@@ -476,7 +477,7 @@ def plot_ewma_chart(chart, start=None, end=None, last_n=30, show_spec=False):
     fig.update_layout(
         height=450,
         title=dict(
-            text=f"<b>EWMA контрольная карта</b><br>"
+            text=f"<b>EWMA Control Chart</b><br>"
                  f"<span style='font-size:14px;color:#666;'>"
                  f"λ={chart.lambda_}, L={chart.L}, σ={chart.sigma_est:.4f}"
                  f"</span>",

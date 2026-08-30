@@ -1,14 +1,19 @@
 import numpy as np
 from src.spc_lib.core.base_chart import BaseControlChart
 
+
 class PChart(BaseControlChart):
     """
-    p-карта (контрольная карта доли дефектных изделий).
+    p-chart (control chart for the proportion of nonconforming units).
+
+    Monitors the fraction of nonconforming items in a process.
+    Supports both fixed and variable sample sizes.
     """
+
     def __init__(self, data, n_fixed=None, datetimes=None, target=None, usl=None, lsl=None):
         super().__init__(data, datetimes, target, usl, lsl)
         self.n_fixed = n_fixed
-        self.main_label = "p-карта: Доля дефектных единиц"
+        self.main_label = "p-chart: Proportion of nonconforming units"
         self.disp_label = None
 
         self.p_values = None
@@ -18,9 +23,17 @@ class PChart(BaseControlChart):
 
     def fit(self, baseline_mask=None, method='classic', use_average_n=False):
         """
-        use_average_n: bool
-            Если True, для переменного размера выборки будут вычислены
-            константные (прямые) границы на основе среднего размера выборки (n_bar).
+        Fit the p-chart to the data.
+
+        Parameters
+        ----------
+        baseline_mask : array-like, optional
+            Boolean mask for baseline data points. If None, all data is used.
+        method : str, default='classic'
+            Method for control limit calculation: 'classic' or 'percentiles'.
+        use_average_n : bool, default=False
+            If True, constant control limits based on average sample size (n_bar)
+            will be used for variable sample sizes.
         """
         if baseline_mask is None:
             baseline_mask = np.ones(self.n_subgroups, dtype=bool)
@@ -36,7 +49,7 @@ class PChart(BaseControlChart):
                 self.p_values = self.data[:, 0] / self.data[:, 1]
                 self.n_values = self.data[:, 1]
             else:
-                raise ValueError("При переменном объеме выборки data должно быть 2D массивом: [x, n]")
+                raise ValueError("For variable sample size, data must be a 2D array with shape (n_samples, 2): [x, n]")
 
         base_p = self.p_values[baseline_mask]
         base_n = self.n_values[baseline_mask]
@@ -53,8 +66,7 @@ class PChart(BaseControlChart):
         if method == 'classic':
             self.cl_main = self.p_bar
 
-            # --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
-            # Если n_fixed задан ИЛИ пользователь попросил усредненные границы
+            # If n_fixed is set OR user requested averaged limits
             if self.n_fixed is not None or use_average_n:
                 n_eval = self.n_fixed if self.n_fixed is not None else self.n_bar
 
@@ -62,7 +74,7 @@ class PChart(BaseControlChart):
                 self.ucl_main = self.p_bar + 3 * sigma_p
                 self.lcl_main = max(0, self.p_bar - 3 * sigma_p)
             else:
-                # Переменные (ступенчатые) границы
+                # Variable (stepwise) limits
                 self.ucl_main = np.zeros(len(self.p_values))
                 self.lcl_main = np.zeros(len(self.p_values))
 
@@ -81,7 +93,7 @@ class PChart(BaseControlChart):
             self.sigma_est = np.std(base_p, ddof=1)
 
         else:
-            raise ValueError(f"Неизвестный метод: {method}")
+            raise ValueError(f"Unknown method: {method}")
 
         self.stat_main = self.p_values
         self.cl_disp = None
@@ -90,23 +102,34 @@ class PChart(BaseControlChart):
 
         return self
 
+
 class CChart(BaseControlChart):
     """
-    c-карта (контрольная карта числа дефектов).
+    c-chart (control chart for the number of defects).
 
-    Используется для мониторинга количества дефектов на единицу продукции
-    при постоянном объеме выборки.
+    Used for monitoring the count of defects per unit of product
+    when the sample size is constant.
     """
 
     def __init__(self, data, datetimes=None, target=None, usl=None, lsl=None):
         super().__init__(data, datetimes, target, usl, lsl)
-        self.main_label = "c-карта: Число дефектов"
+        self.main_label = "c-chart: Number of defects"
         self.disp_label = None
 
         self.c_values = None
         self.c_bar = None
 
     def fit(self, baseline_mask=None, method='classic'):
+        """
+        Fit the c-chart to the data.
+
+        Parameters
+        ----------
+        baseline_mask : array-like, optional
+            Boolean mask for baseline data points. If None, all data is used.
+        method : str, default='classic'
+            Method for control limit calculation: 'classic' or 'percentiles'.
+        """
         if baseline_mask is None:
             baseline_mask = np.ones(self.n_subgroups, dtype=bool)
 
@@ -126,7 +149,7 @@ class CChart(BaseControlChart):
             self.cl_main = self.c_bar
             sigma_c = np.sqrt(self.c_bar)
             self.ucl_main = self.c_bar + 3 * sigma_c
-            # LCL не может быть меньше 0
+            # LCL cannot be less than 0
             self.lcl_main = max(0, self.c_bar - 3 * sigma_c)
             self.sigma_est = sigma_c
 
@@ -137,7 +160,7 @@ class CChart(BaseControlChart):
             self.sigma_est = np.std(base_c, ddof=1)
 
         else:
-            raise ValueError(f"Неизвестный метод: {method}")
+            raise ValueError(f"Unknown method: {method}")
 
         self.stat_main = self.c_values
         self.cl_disp = None

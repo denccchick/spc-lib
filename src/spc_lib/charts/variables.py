@@ -1,7 +1,7 @@
 import numpy as np
 from src.spc_lib.core.base_chart import BaseControlChart
 
-# Константы Монтгомери (n: A2, A3, D3, D4, B3, B4)
+# Montgomery constants (n: A2, A3, D3, D4, B3, B4)
 SPC_CONSTANTS = {
     2: (1.880, 2.659, 0.0,   3.267, 0.0,   3.267),
     3: (1.023, 1.954, 0.0,   2.574, 0.0,   2.568),
@@ -14,11 +14,12 @@ SPC_CONSTANTS = {
     10: (0.308, 0.975, 0.223, 1.777, 0.284, 1.716)
 }
 
+
 class XBarRChart(BaseControlChart):
     def __init__(self, data, datetimes=None, target=None, usl=None, lsl=None):
         super().__init__(data, datetimes, target, usl, lsl)
-        self.main_label = "X-bar: Средние значения подгрупп"
-        self.disp_label = "R: Размах в подгруппах"
+        self.main_label = "X-bar: Subgroup means"
+        self.disp_label = "R: Subgroup ranges"
 
     def fit(self, baseline_mask=None, method='classic'):
         if baseline_mask is None:
@@ -34,7 +35,7 @@ class XBarRChart(BaseControlChart):
 
         if method == 'classic':
             if n not in SPC_CONSTANTS:
-                raise ValueError("Для классического метода n должно быть от 2 до 10")
+                raise ValueError("For classic method, n must be between 2 and 10")
             A2, _, D3, D4, _, _ = SPC_CONSTANTS[n]
 
             self.cl_main = np.mean(base_xbar)
@@ -88,15 +89,16 @@ class XBarRChart(BaseControlChart):
             self.ucl_disp = np.percentile(base_r, 99.865)
             self.lcl_disp = np.percentile(base_r, 0.135)
         else:
-            raise ValueError(f"Неизвестный метод: {method}")
+            raise ValueError(f"Unknown method: {method}")
 
         return self
+
 
 class XBarSChart(BaseControlChart):
     def __init__(self, data, datetimes=None, target=None, usl=None, lsl=None):
         super().__init__(data, datetimes, target, usl, lsl)
-        self.main_label = "X-bar: Средние значения подгрупп"
-        self.disp_label = "S: Стандартное отклонение в подгруппах"
+        self.main_label = "X-bar: Subgroup means"
+        self.disp_label = "S: Subgroup standard deviations"
 
     def fit(self, baseline_mask=None, method='classic'):
         if baseline_mask is None:
@@ -112,7 +114,7 @@ class XBarSChart(BaseControlChart):
 
         if method == 'classic':
             if n not in SPC_CONSTANTS:
-                raise ValueError("Для классического метода n должно быть от 2 до 10")
+                raise ValueError("For classic method, n must be between 2 and 10")
             _, A3, _, _, B3, B4 = SPC_CONSTANTS[n]
 
             self.cl_main = np.mean(base_xbar)
@@ -133,15 +135,16 @@ class XBarSChart(BaseControlChart):
             self.ucl_disp = np.percentile(base_s, 99.865)
             self.lcl_disp = np.percentile(base_s, 0.135)
         else:
-            raise ValueError(f"Метод {method} пока поддерживается только для Xbar-R карты")
+            raise ValueError(f"Method {method} is currently only supported for Xbar-R chart")
 
         return self
+
 
 class IMRChart(BaseControlChart):
     def __init__(self, data, datetimes=None, target=None, usl=None, lsl=None):
         super().__init__(data, datetimes, target, usl, lsl)
-        self.main_label = "I: Индивидуальные значения"
-        self.disp_label = "MR: Скользящий размах"
+        self.main_label = "I: Individual values"
+        self.disp_label = "MR: Moving range"
 
     def fit(self, baseline_mask=None, method='classic'):
 
@@ -256,7 +259,7 @@ class IMRChart(BaseControlChart):
 
         else:
             raise ValueError(
-                f"Неизвестный метод: {method}"
+                f"Unknown method: {method}"
             )
 
         return self

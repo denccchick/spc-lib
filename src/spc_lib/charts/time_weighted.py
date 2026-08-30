@@ -5,25 +5,24 @@ from src.spc_lib.core.base_chart import BaseControlChart
 
 class CUSUMChart(BaseControlChart):
     """
-    Кумулятивная сумма (CUSUM) - контрольная карта для обнаружения
-    малых сдвигов процесса.
+    Cumulative Sum (CUSUM) control chart for detecting small process shifts.
 
-    Параметры:
+    Parameters
     ----------
     data : array-like
-        Данные подгрупп (2D массив) или индивидуальные значения (1D)
+        Subgroup data (2D array) or individual values (1D)
     datetimes : array-like, optional
-        Временные метки
+        Time stamps
     target : float, optional
-        Целевое значение процесса
+        Target process value
     usl, lsl : float, optional
-        Верхняя/нижняя границы спецификации
+        Upper/lower specification limits
     h : float, default=5
-        Параметр принятия решения (расстояние от нулевой линии до границы)
+        Decision interval parameter (distance from zero line to boundary)
     k : float, default=0.5
-        Параметр ссылочного значения (обычно 0.5 для стандартного CUSUM)
+        Reference value parameter (typically 0.5 for standard CUSUM)
     std_est : float, optional
-        Оценка стандартного отклонения. Если None, рассчитывается из данных.
+        Estimated standard deviation. If None, estimated from data.
     """
 
     def __init__(self, data, datetimes=None, target=None, usl=None, lsl=None,
@@ -32,7 +31,7 @@ class CUSUMChart(BaseControlChart):
         self.h = h
         self.k = k
         self.std_est = std_est
-        self.main_label = "CUSUM: Кумулятивная сумма (верхняя/нижняя)"
+        self.main_label = "CUSUM: Cumulative sum (upper/lower)"
         self.disp_label = None
 
         self.cusum_upper = None
@@ -41,10 +40,12 @@ class CUSUMChart(BaseControlChart):
 
     def fit(self, baseline_mask=None, method='classic'):
         """
-        Методы:
-        - 'classic': стандартный CUSUM с параметрами h и k
-        - 'percentiles': эмпирические пределы на основе процентилей
-        - 'made': робастный CUSUM на основе MAD
+        Fit the CUSUM chart to the data.
+
+        Methods:
+        - 'classic': standard CUSUM with h and k parameters
+        - 'percentiles': empirical limits based on percentiles
+        - 'made': robust CUSUM based on MAD
         """
         if baseline_mask is None:
             baseline_mask = np.ones(self.n_subgroups, dtype=bool)
@@ -58,7 +59,7 @@ class CUSUMChart(BaseControlChart):
                 n = self.subgroup_size
         else:
             warnings.warn(
-                "Передан 1D массив. Рекомендуется использовать 2D формат: data.reshape(-1, 1)",
+                "1D array provided. It is recommended to use 2D format: data.reshape(-1, 1)",
                 UserWarning
             )
             x = self.data
@@ -84,12 +85,12 @@ class CUSUMChart(BaseControlChart):
         else:
             target = np.median(base_x)
 
-        # Нормировка
+        # Normalization
         if sigma_est > 0:
             z = (x - target) / sigma_est
         else:
             z = x - target
-            warnings.warn("Сигма равна 0, используется ненормированная статистика", UserWarning)
+            warnings.warn("Sigma is zero, using unnormalized statistic", UserWarning)
 
         self.cusum_upper = np.zeros(len(x))
         self.cusum_lower = np.zeros(len(x))
@@ -131,7 +132,7 @@ class CUSUMChart(BaseControlChart):
             sigma_est = robust_sigma
 
         else:
-            raise ValueError(f"Неизвестный метод: {method}")
+            raise ValueError(f"Unknown method: {method}")
 
         self.target = target
         self.sigma_est = sigma_est
@@ -140,31 +141,31 @@ class CUSUMChart(BaseControlChart):
         return self
 
     def get_cusum_stats(self):
-        """Возвращает верхнюю и нижнюю CUSUM статистики"""
+        """Return the upper and lower CUSUM statistics"""
         return self.cusum_upper, self.cusum_lower
 
 
 class EWMAChart(BaseControlChart):
     """
-    Экспоненциально взвешенное скользящее среднее (EWMA)
-    - контрольная карта для обнаружения малых сдвигов процесса.
+    Exponentially Weighted Moving Average (EWMA) control chart
+    for detecting small process shifts.
 
-    Параметры:
+    Parameters
     ----------
     data : array-like
-        Данные подгрупп (2D массив) или индивидуальные значения (1D)
+        Subgroup data (2D array) or individual values (1D)
     datetimes : array-like, optional
-        Временные метки
+        Time stamps
     target : float, optional
-        Целевое значение процесса
+        Target process value
     usl, lsl : float, optional
-        Верхняя/нижняя границы спецификации
+        Upper/lower specification limits
     lambda_ : float, default=0.2
-        Весовой коэффициент (0 < lambda <= 1)
+        Weighting factor (0 < lambda <= 1)
     L : float, default=3
-        Коэффициент ширины контрольных границ
+        Control limit width coefficient
     std_est : float, optional
-        Оценка стандартного отклонения. Если None, рассчитывается из данных.
+        Estimated standard deviation. If None, estimated from data.
     """
 
     def __init__(self, data, datetimes=None, target=None, usl=None, lsl=None,
@@ -173,7 +174,7 @@ class EWMAChart(BaseControlChart):
         self.lambda_ = lambda_
         self.L = L
         self.std_est = std_est
-        self.main_label = "EWMA: Экспоненциально взвешенное скользящее среднее"
+        self.main_label = "EWMA: Exponentially Weighted Moving Average"
         self.disp_label = None
 
         self.ewma_values = None
@@ -182,15 +183,17 @@ class EWMAChart(BaseControlChart):
 
     def fit(self, baseline_mask=None, method='classic'):
         """
-        Методы:
-        - 'classic': стандартная EWMA с фиксированными пределами
-        - 'percentiles': эмпирические пределы на основе процентилей
-        - 'made': робастная EWMA на основе MAD
+        Fit the EWMA chart to the data.
+
+        Methods:
+        - 'classic': standard EWMA with fixed limits
+        - 'percentiles': empirical limits based on percentiles
+        - 'made': robust EWMA based on MAD
         """
         if baseline_mask is None:
             baseline_mask = np.ones(self.n_subgroups, dtype=bool)
 
-        # Извлечение данных
+        # Extract data
         if self.data.ndim == 2:
             if self.subgroup_size == 1:
                 x = self.data.flatten()
@@ -200,7 +203,7 @@ class EWMAChart(BaseControlChart):
                 n = self.subgroup_size
         else:
             warnings.warn(
-                "Передан 1D массив. Рекомендуется использовать 2D формат: data.reshape(-1, 1)",
+                "1D array provided. It is recommended to use 2D format: data.reshape(-1, 1)",
                 UserWarning
             )
             x = self.data
@@ -208,7 +211,7 @@ class EWMAChart(BaseControlChart):
 
         base_x = x[baseline_mask]
 
-        # Оценка стандартного отклонения
+        # Estimate standard deviation
         if self.std_est is None:
             if n > 1 and method == 'classic':
                 r = np.ptp(self.data[baseline_mask], axis=1)
@@ -220,7 +223,7 @@ class EWMAChart(BaseControlChart):
         else:
             sigma_est = self.std_est
 
-        # Целевое значение
+        # Target value
         if self.target is not None:
             target = self.target
         elif method == 'classic':
@@ -231,21 +234,21 @@ class EWMAChart(BaseControlChart):
         lambda_ = self.lambda_
         L = self.L
 
-        # Расчет EWMA
+        # Calculate EWMA
         self.ewma_values = np.zeros(len(x))
         self.ewma_values[0] = target
 
         for i in range(1, len(x)):
             self.ewma_values[i] = lambda_ * x[i] + (1 - lambda_) * self.ewma_values[i-1]
 
-        # Стандартное отклонение EWMA: σ * sqrt(λ/(2-λ) * (1 - (1-λ)^(2i)))
+        # EWMA standard deviation: σ * sqrt(λ/(2-λ) * (1 - (1-λ)^(2i)))
         weights = np.zeros(len(x))
         for i in range(1, len(x) + 1):
             weights[i-1] = np.sqrt(lambda_ / (2 - lambda_) * (1 - (1 - lambda_)**(2*i)))
 
         self.ewma_sigma = sigma_est * weights
 
-        # Расчет границ в зависимости от метода
+        # Calculate limits based on method
         if method == 'classic':
             self.cl_main = target
             self.ucl_main = target + L * self.ewma_sigma
@@ -268,7 +271,7 @@ class EWMAChart(BaseControlChart):
             sigma_est = robust_sigma
 
         else:
-            raise ValueError(f"Неизвестный метод: {method}")
+            raise ValueError(f"Unknown method: {method}")
 
         self.target = target
         self.sigma_est = sigma_est
@@ -277,57 +280,60 @@ class EWMAChart(BaseControlChart):
         return self
 
     def get_ewma_values(self):
-        """Возвращает EWMA значения и их стандартные отклонения"""
+        """Return the EWMA values and their standard deviations"""
         return self.ewma_values, self.ewma_sigma
+
 
 class CUSUMVarianceChart(BaseControlChart):
     """
-    CUSUM карта для контроля дисперсии/стандартного отклонения.
-    Использует преобразование Хокинса для мониторинга вариабельности процесса.
+    CUSUM chart for monitoring variance/standard deviation.
+    Uses Hawkins' transformation for monitoring process variability.
 
-    Параметры:
+    Parameters
     ----------
     data : array-like
-        Данные подгрупп (2D массив) или индивидуальные значения (1D)
+        Subgroup data (2D array) or individual values (1D)
     datetimes : array-like, optional
-        Временные метки
+        Time stamps
     target_mean : float, optional
-        Целевое среднее процесса. Если None - оценивается из данных.
+        Target process mean. If None - estimated from data.
     target_std : float, optional
-        Целевое стандартное отклонение. Если None - оценивается из данных.
+        Target standard deviation. If None - estimated from data.
     usl, lsl : float, optional
-        Верхняя/нижняя границы спецификации
+        Upper/lower specification limits
     h : float, default=5
-        Параметр принятия решения
+        Decision interval parameter
     k : float, default=0.5
-        Параметр ссылочного значения
+        Reference value parameter
     """
 
     def __init__(self, data, datetimes=None, target_mean=None, target_std=None,
                  usl=None, lsl=None, h=5.0, k=0.5):
-        super().__init__(data, datetimes, None, usl, lsl)  # target передаем как None, используем target_mean
+        super().__init__(data, datetimes, None, usl, lsl)  # target passed as None, using target_mean
         self.target_mean = target_mean
         self.target_std = target_std
         self.h = h
         self.k = k
-        self.main_label = "CUSUM для дисперсии (верхняя/нижняя)"
+        self.main_label = "CUSUM for variance (upper/lower)"
         self.disp_label = None
 
         self.cusum_upper = None
         self.cusum_lower = None
-        self.v_values = None  # Преобразованные значения v_i
+        self.v_values = None  # Transformed values v_i
         self.sigma_est = None
 
     def fit(self, baseline_mask=None, method='classic'):
         """
-        Методы:
-        - 'classic': стандартный CUSUM для дисперсии с преобразованием Хокинса
-        - 'percentiles': эмпирические пределы на основе процентилей
+        Fit the variance CUSUM chart to the data.
+
+        Methods:
+        - 'classic': standard CUSUM for variance with Hawkins transformation
+        - 'percentiles': empirical limits based on percentiles
         """
         if baseline_mask is None:
             baseline_mask = np.ones(self.n_subgroups, dtype=bool)
 
-        # Извлечение данных
+        # Extract data
         if self.data.ndim == 2:
             if self.subgroup_size == 1:
                 x = self.data.flatten()
@@ -337,7 +343,7 @@ class CUSUMVarianceChart(BaseControlChart):
                 n = self.subgroup_size
         else:
             warnings.warn(
-                "Передан 1D массив. Рекомендуется использовать 2D формат: data.reshape(-1, 1)",
+                "1D array provided. It is recommended to use 2D format: data.reshape(-1, 1)",
                 UserWarning
             )
             x = self.data
@@ -345,7 +351,7 @@ class CUSUMVarianceChart(BaseControlChart):
 
         base_x = x[baseline_mask]
 
-        # Оценка среднего и стандартного отклонения
+        # Estimate mean and standard deviation
         if self.target_mean is not None:
             mu = self.target_mean
         elif method == 'classic':
@@ -363,23 +369,23 @@ class CUSUMVarianceChart(BaseControlChart):
         else:
             sigma = np.std(base_x, ddof=1)
 
-        # Стандартизованные значения
+        # Standardized values
         if sigma > 0:
             y = (x - mu) / sigma
         else:
             y = x - mu
-            warnings.warn("Сигма равна 0, используется ненормированная статистика", UserWarning)
+            warnings.warn("Sigma is zero, using unnormalized statistic", UserWarning)
 
-        # Преобразование Хокинса для мониторинга дисперсии
+        # Hawkins transformation for monitoring variance
         # v_i = (sqrt(|y_i|) - 0.822) / 0.349
-        # При нормальном распределении v_i ~ N(0,1)
+        # Under normal distribution v_i ~ N(0,1)
         self.v_values = (np.sqrt(np.abs(y)) - 0.822) / 0.349
 
         self.cusum_upper = np.zeros(len(x))
         self.cusum_lower = np.zeros(len(x))
 
         if method == 'classic':
-            # Стандартный CUSUM для v_i
+            # Standard CUSUM for v_i
             for i in range(1, len(x)):
                 self.cusum_upper[i] = max(0, self.cusum_upper[i-1] + self.v_values[i] - self.k)
                 self.cusum_lower[i] = max(0, self.cusum_lower[i-1] - self.k - self.v_values[i])
@@ -401,12 +407,12 @@ class CUSUMVarianceChart(BaseControlChart):
             self.lcl_main = np.percentile(base_cusum_lower, 99.865)
 
         else:
-            raise ValueError(f"Неизвестный метод: {method}")
+            raise ValueError(f"Unknown method: {method}")
 
-        self.target = mu  # Для совместимости с базовым классом
+        self.target = mu  # For compatibility with base class
         self.target_mean = mu
         self.target_std = sigma
         self.sigma_est = sigma
-        self.stat_main = x  # Исходные данные для справки
+        self.stat_main = x  # Original data for reference
 
         return self
