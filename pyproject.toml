@@ -39,6 +39,7 @@ dependencies = [
 dev = [
     "ipykernel>=6.0.0",
     "jupyter>=1.0.0",
+    "pytest>=7.0.0",
 ]
 
 [project.urls]
@@ -55,4 +56,15 @@ include = [
     "/examples",
     "README.md",
     "LICENSE",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--tb=short",
 ]
