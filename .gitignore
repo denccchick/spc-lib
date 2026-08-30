@@ -32,3 +32,9 @@ EOF
 structure
 *.structure
 EOF
+
+dist/
+*.whl
+*.tar.gz
+
+.pypirc
