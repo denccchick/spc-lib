@@ -92,29 +92,29 @@ def detect_violations(
     rules: Optional[List[int]] = None
 ) -> Dict[int, List[int]]:
     """
-    Проверка правил Western Electric на одномерном массиве статистик.
+    Detect Western Electric rule violations on a 1D array of statistics.
 
     Parameters
     ----------
     data : np.ndarray
-        Одномерный массив (stat_main или stat_disp)
+        1D array (stat_main or stat_disp)
     center, sigma : float
-        Центр и сигма процесса
+        Process center and sigma
     last_n : int, default=30
-        Последние N точек. None - все данные
-    date_from, date_to : str или datetime
-        Период фильтрации
+        Last N points. None - use all data
+    date_from, date_to : str or datetime
+        Date filtering period
     dates : np.ndarray
-        Даты (обязательны при фильтрации по датам)
+        Dates (required when filtering by date)
     rules : List[int]
-        Номера правил (1-8). По умолчанию все.
+        Rule numbers (1-8). Default is all.
 
     Returns
     -------
     Dict[int, List[int]]
-        {номер_правила: [индексы нарушений]}
+        {rule_number: [violation_indices]}
     """
-    # Срез данных
+    # Data slice
     if date_from is not None or date_to is not None:
         if dates is None:
             raise ValueError("dates required for date filtering")
