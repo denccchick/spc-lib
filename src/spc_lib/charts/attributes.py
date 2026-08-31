@@ -1,5 +1,5 @@
 import numpy as np
-from src.spc_lib.core.base_chart import BaseControlChart
+from spc_lib.core.base_chart import BaseControlChart
 
 
 class PChart(BaseControlChart):

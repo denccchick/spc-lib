@@ -42,11 +42,11 @@ class BaseControlChart:
             return np.arange(len(dates)) >= (len(dates) - last_n)
 
     def plot(self, start=None, end=None, last_n=30, show_spec=False):
-        from src.spc_lib.visualization import plot_control_chart
+        from spc_lib.visualization import plot_control_chart
         return plot_control_chart(self, start, end, last_n, show_spec)
 
     def plot_rules(self, start=None, end=None, last_n=30, rules=None, n_cols=1, show_spec=False):
-        from src.spc_lib.visualization import plot_rules_violations
+        from spc_lib.visualization import plot_rules_violations
         return plot_rules_violations(self, start, end, last_n, rules, n_cols, show_spec)
 
     def capability(self, usl=None, lsl=None):
