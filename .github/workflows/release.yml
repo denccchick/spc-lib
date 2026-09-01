@@ -1,0 +1,75 @@
+name: Upload Python Package to PyPi on release
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  publish-to-pypi:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/spc-lib
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Build package
+        run: uv build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+
+  deploy-docs:
+    runs-on: ubuntu-latest
+    needs: publish-to-pypi
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Install dependencies and Sphinx
+        run: |
+          uv venv
+          uv pip install numpy scipy plotly
+          uv pip install sphinx sphinx-rtd-theme furo
+          uv pip install -e .
+
+      - name: Build documentation
+        run: |
+          source .venv/bin/activate
+          cd docs
+          sphinx-build -b html . _build/html
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_build/html
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
