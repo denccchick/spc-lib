@@ -61,9 +61,8 @@ jobs:
 
       - name: Build documentation
         run: |
-          source .venv/bin/activate
           cd docs
-          sphinx-build -b html . _build/html
+          .venv/bin/sphinx-build -b html . _build/html
 
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v3
