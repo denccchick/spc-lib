@@ -38,3 +38,12 @@ dist/
 *.tar.gz
 
 .pypirc
+
+docs/_build/
+docs/_static/
+docs/_templates/
+
+build/
+*.egg-info/
+*.egg
+MANIFEST
