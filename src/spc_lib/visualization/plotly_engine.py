@@ -338,6 +338,14 @@ def _plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
     cusum_lower = np.asarray(chart.cusum_lower)[mask]
     dates_plot = dates[mask]
 
+    violations_upper = cusum_upper > chart.ucl_main
+    marker_colors_upper = np.where(violations_upper, COLOR_RED, COLOR_MAIN)
+    marker_sizes_upper = np.where(violations_upper, 14, 10)
+
+    violations_lower = cusum_lower > chart.lcl_main
+    marker_colors_lower = np.where(violations_lower, COLOR_RED, "#FF6B00")
+    marker_sizes_lower = np.where(violations_lower, 14, 10)
+
     fig = make_subplots(rows=2, cols=1,
                         subplot_titles=("Upper CUSUM (C+)", "Lower CUSUM (C-)"),
                         vertical_spacing=0.15)
@@ -346,7 +354,11 @@ def _plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
     fig.add_trace(go.Scatter(
         x=dates_plot, y=cusum_upper, mode='lines+markers',
         line=dict(color=COLOR_MAIN, width=2.5),
-        marker=dict(color=COLOR_MAIN, size=8),
+        marker=dict(
+            color=marker_colors_upper,
+            size=marker_sizes_upper,
+            line=dict(color='white', width=2)
+        ),
         name="C+"
     ), row=1, col=1)
 
@@ -362,7 +374,11 @@ def _plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
     fig.add_trace(go.Scatter(
         x=dates_plot, y=cusum_lower, mode='lines+markers',
         line=dict(color="#FF6B00", width=2.5),
-        marker=dict(color="#FF6B00", size=8),
+        marker=dict(
+            color=marker_colors_lower,
+            size=marker_sizes_lower,
+            line=dict(color='white', width=2)
+        ),
         name="C-"
     ), row=2, col=1)
 
@@ -379,7 +395,7 @@ def _plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
         title=dict(
             text=f"<b>CUSUM Control Chart</b><br>"
                  f"<span style='font-size:14px;color:#666;'>"
-                 f"λ={chart.k}, h={chart.h}, σ={chart.sigma_est:.4f}"
+                 f"k={chart.k}, h={chart.h}, σ={chart.sigma_est:.4f}"
                  f"</span>",
             x=0.5
         ),
