@@ -62,3 +62,8 @@ class CUSUMVarianceChart(BaseControlChart):
         self.target, self.target_mean = mu, mu
         self.target_std, self.sigma_est, self.stat_main = sigma, sigma, x
         return self
+
+    def plot(self, start=None, end=None, last_n=30, show_spec=False):
+        """Plot CUSUM chart for variance."""
+        from spc_lib.visualization.plotly_engine import _plot_cusum_chart
+        return _plot_cusum_chart(self, start, end, last_n, show_spec)
