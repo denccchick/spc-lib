@@ -1,6 +1,6 @@
 import numpy as np
 from spc_lib.core.base_chart import BaseControlChart
-from .xbar_r import SPC_CONSTANTS
+from .constants import SPC_CONSTANTS
 
 
 class XBarSChart(BaseControlChart):
