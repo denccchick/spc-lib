@@ -66,3 +66,7 @@ class EWMAChart(BaseControlChart):
 
     def get_ewma_values(self):
         return self.ewma_values, self.ewma_sigma
+
+    def plot(self, start=None, end=None, last_n=30, show_spec=False):
+        from spc_lib.visualization.plotly_engine import _plot_ewma_chart
+        return _plot_ewma_chart(self, start, end, last_n, show_spec)

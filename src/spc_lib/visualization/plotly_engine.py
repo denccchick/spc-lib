@@ -320,7 +320,7 @@ def plot_rules_violations(chart, start=None, end=None, last_n=30, rules=None, n_
     return fig
 
 
-def plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
+def _plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
     """
     Specialized visualization for CUSUM chart.
     Displays upper and lower cumulative sums.
@@ -394,7 +394,7 @@ def plot_cusum_chart(chart, start=None, end=None, last_n=30, show_spec=False):
     return fig
 
 
-def plot_ewma_chart(chart, start=None, end=None, last_n=30, show_spec=False):
+def _plot_ewma_chart(chart, start=None, end=None, last_n=30, show_spec=False):
     """
     Specialized visualization for EWMA chart.
     """
