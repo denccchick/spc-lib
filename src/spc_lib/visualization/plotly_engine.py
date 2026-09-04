@@ -158,7 +158,7 @@ def plot_control_chart(chart, start=None, end=None, last_n=30, show_spec=False):
     return fig_main, fig_disp
 
 
-def plot_rules_violations(chart, start=None, end=None, last_n=30, rules=None, n_cols=2, show_spec=False):
+def plot_rules_violations(chart, start=None, end=None, last_n=30, show_spec=False):
     dates = np.asarray(chart.datetimes)
 
     if start is not None:
@@ -176,8 +176,7 @@ def plot_rules_violations(chart, start=None, end=None, last_n=30, rules=None, n_
         data=stats_main,
         center=chart.cl_main,
         sigma=sigma_main,
-        last_n=None,
-        rules=rules
+        last_n=None
     )
 
     active_rules = {r: indices for r, indices in violations_by_rule.items() if indices}
@@ -194,19 +193,6 @@ def plot_rules_violations(chart, start=None, end=None, last_n=30, rules=None, n_
         fig.update_yaxes(showgrid=False, zeroline=False, showline=False)
         return fig
 
-    rule_list = list(active_rules.keys())
-    n_figs = len(rule_list)
-    n_rows = (n_figs + n_cols - 1) // n_cols
-
-    subplot_titles = [RULE_NAMES[r] for r in rule_list]
-
-    fig = make_subplots(
-        rows=n_rows, cols=n_cols,
-        subplot_titles=subplot_titles,
-        vertical_spacing=0.12,
-        horizontal_spacing=0.08
-    )
-
     stats = stats_main
     valid = ~np.isnan(stats)
     stats = stats[valid]
@@ -219,103 +205,103 @@ def plot_rules_violations(chart, start=None, end=None, last_n=30, rules=None, n_
             dates_plot = np.array([np.datetime64(d) for d in dates_plot])
 
     n_points = len(stats)
+    rule_list = list(active_rules.keys())
 
-    rule_idx = 0
-    for rule_num, indices in active_rules.items():
-        row = rule_idx // n_cols + 1
-        col = rule_idx % n_cols + 1
-
+    def marker_style(rule_num):
         rule_violations = np.zeros(n_points, dtype=bool)
-        for idx in indices:
-            if idx < n_points:
+        for idx in active_rules[rule_num]:
+            if 0 <= idx < n_points:
                 rule_violations[idx] = True
+        return (
+            np.where(rule_violations, RULE_COLORS.get(rule_num, COLOR_RED), COLOR_MAIN),
+            np.where(rule_violations, 14, 10)
+        )
 
-        marker_colors_rule = np.where(rule_violations, RULE_COLORS.get(rule_num, COLOR_RED), COLOR_MAIN)
-        marker_sizes_rule = np.where(rule_violations, 14, 10)
+    marker_colors, marker_sizes = marker_style(rule_list[0])
+    fig = go.Figure()
 
-        # UCL
+    fig.add_trace(go.Scatter(
+        x=dates_plot, y=[chart.ucl_main] * n_points, mode="lines",
+        line=dict(color=COLOR_RED, width=2.5), showlegend=False, hoverinfo='skip'
+    ))
+    fig.add_trace(go.Scatter(
+        x=dates_plot, y=[chart.lcl_main] * n_points, mode="lines",
+        line=dict(color=COLOR_RED, width=2.5), showlegend=False, hoverinfo='skip'
+    ))
+    fig.add_trace(go.Scatter(
+        x=dates_plot, y=[chart.cl_main] * n_points, mode="lines",
+        line=dict(color=COLOR_CL, width=2, dash='dash'), showlegend=False, hoverinfo='skip'
+    ))
+
+    if chart.target is not None:
         fig.add_trace(go.Scatter(
-            x=dates_plot, y=[chart.ucl_main] * n_points, mode="lines",
-            line=dict(color=COLOR_RED, width=2.5), showlegend=False, hoverinfo='skip'
-        ), row=row, col=col)
+            x=dates_plot, y=[chart.target] * n_points, mode="lines",
+            line=dict(color=COLOR_TARGET, width=2, dash='dot'),
+            showlegend=False, hoverinfo='skip'
+        ))
 
-        # LCL
-        fig.add_trace(go.Scatter(
-            x=dates_plot, y=[chart.lcl_main] * n_points, mode="lines",
-            line=dict(color=COLOR_RED, width=2.5), showlegend=False, hoverinfo='skip'
-        ), row=row, col=col)
-
-        # CL
-        fig.add_trace(go.Scatter(
-            x=dates_plot, y=[chart.cl_main] * n_points, mode="lines",
-            line=dict(color=COLOR_CL, width=2, dash='dash'), showlegend=False, hoverinfo='skip'
-        ), row=row, col=col)
-
-        # Target (if provided)
-        if chart.target is not None:
+    if show_spec:
+        if chart.usl is not None:
             fig.add_trace(go.Scatter(
-                x=dates_plot, y=[chart.target] * n_points, mode="lines",
-                line=dict(color=COLOR_TARGET, width=2, dash='dot'),
+                x=dates_plot, y=[chart.usl] * n_points, mode="lines",
+                line=dict(color=COLOR_SPEC, width=2, dash='dashdot'),
                 showlegend=False, hoverinfo='skip'
-            ), row=row, col=col)
+            ))
+        if chart.lsl is not None:
+            fig.add_trace(go.Scatter(
+                x=dates_plot, y=[chart.lsl] * n_points, mode="lines",
+                line=dict(color=COLOR_SPEC, width=2, dash='dashdot'),
+                showlegend=False, hoverinfo='skip'
+            ))
 
-        # USL/LSL (if provided and show_spec=True)
-        if show_spec:
-            if chart.usl is not None:
-                fig.add_trace(go.Scatter(
-                    x=dates_plot, y=[chart.usl] * n_points, mode="lines",
-                    line=dict(color=COLOR_SPEC, width=2, dash='dashdot'),
-                    showlegend=False, hoverinfo='skip'
-                ), row=row, col=col)
-            if chart.lsl is not None:
-                fig.add_trace(go.Scatter(
-                    x=dates_plot, y=[chart.lsl] * n_points, mode="lines",
-                    line=dict(color=COLOR_SPEC, width=2, dash='dashdot'),
-                    showlegend=False, hoverinfo='skip'
-                ), row=row, col=col)
+    statistic_trace_index = len(fig.data)
+    fig.add_trace(go.Scatter(
+        x=dates_plot, y=stats, mode='lines+markers',
+        line=dict(color=COLOR_MAIN, width=3.5),
+        marker=dict(color=marker_colors, size=marker_sizes, line=dict(color='white', width=2)),
+        hovertemplate="Date: %{x}<br>Value: <b>%{y:.4f}</b><extra></extra>",
+        showlegend=False
+    ))
 
-        fig.add_trace(go.Scatter(
-            x=dates_plot, y=stats, mode='lines+markers',
-            line=dict(color=COLOR_MAIN, width=3.5),
-            marker=dict(
-                color=marker_colors_rule,
-                size=marker_sizes_rule,
-                line=dict(color='white', width=2)
-            ),
-            hovertemplate="Date: %{x}<br>Value: <b>%{y:.4f}</b><extra></extra>",
-            showlegend=False
-        ), row=row, col=col)
-
-        fig.update_xaxes(
-            showgrid=False, zeroline=False, showline=True,
-            linecolor="#E0E0E0", tickfont=dict(color="#A0A0A0", size=9),
-            row=row, col=col
-        )
-
-        fig.update_yaxes(
-            showgrid=True, gridcolor="#F5F5F5", gridwidth=1,
-            zeroline=False, showline=True, linecolor="#E0E0E0",
-            tickfont=dict(color="#A0A0A0", size=9),
-            row=row, col=col
-        )
-
-        rule_idx += 1
-
-    height = max(400, 400 * n_rows)
+    buttons = []
+    for rule_num in rule_list:
+        colors, sizes = marker_style(rule_num)
+        buttons.append(dict(
+            label=RULE_NAMES.get(rule_num, f"Rule {rule_num}"),
+            method="restyle",
+            args=[
+                {"marker.color": [colors], "marker.size": [sizes]},
+                [statistic_trace_index]
+            ]
+        ))
 
     fig.update_layout(
-        height=height,
+        height=500,
         plot_bgcolor='white', paper_bgcolor='white',
         hovermode='x unified',
         title=dict(
-            text=f"<b>Western Electric Rule Violations</b><br>"
-                 f"<span style='font-size:14px;color:#666;'>"
-                 f"Total violations: {sum(len(v) for v in active_rules.values())} in rules {', '.join(map(str, active_rules.keys()))}"
-                 f"</span>",
-            x=0.5
+            text="<b>Western Electric Rule Violations</b>",
+            x=0.5,
+            xref="paper",
+            y=0.93
         ),
-        margin=dict(l=50, r=30, t=100, b=50)
+        updatemenus=[dict(
+            type="dropdown",
+            direction="down",
+            x=0.5,
+            xanchor="center",
+            y=0.85,
+            yanchor="top",
+            showactive=True,
+            buttons=buttons
+        )],
+        margin=dict(l=50, r=30, t=110, b=50)
     )
+    fig.update_xaxes(showgrid=False, zeroline=False, showline=True,
+                     linecolor="#E0E0E0", tickfont=dict(color="#A0A0A0", size=9))
+    fig.update_yaxes(showgrid=True, gridcolor="#F5F5F5", gridwidth=1,
+                     zeroline=False, showline=True, linecolor="#E0E0E0",
+                     tickfont=dict(color="#A0A0A0", size=9))
 
     return fig
 
